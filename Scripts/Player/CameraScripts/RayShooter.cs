@@ -38,10 +38,10 @@ public class RayShooter : MonoBehaviour
                     Debug.Log("Target hit");
                     target.ReactToHit(objectToFollow);
                 }
-                else
-                {
-                    StartCoroutine(SphereIndicator(hit.point));
-                }
+                //else
+                //{
+                //    StartCoroutine(SphereIndicator(hit.point));
+                //}
             }
         }
 

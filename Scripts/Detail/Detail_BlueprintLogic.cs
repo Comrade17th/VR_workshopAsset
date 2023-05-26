@@ -21,12 +21,28 @@ public class Detail_BlueprintLogic : MonoBehaviour
     public Transform copyChild;
     public Transform originalParent;
 
+    public float maxSpawnRadius = 2;
+    public float minSpawnRadius = 1;
+
+    public float CollisionAccuracy = 0.05f;
+
     void Start()
     {
         renderer = GetComponent<Renderer>();
         renderer.enabled = true;
         origin = renderer.material;
-        ChangeCondition(0);
+        
+
+        if(originalParent == null) // if its original
+        {
+            ChangeCondition(0);
+            CreateDetail(transform.position + new Vector3(1, 1, 0));
+        }
+        else // if its copied
+        {
+            ChangeCondition(2);
+        }
+            
     }
 
     // Update is called once per frame
@@ -55,13 +71,100 @@ public class Detail_BlueprintLogic : MonoBehaviour
             }
                 
         }
+
+        if(copyChild != null)
+        {
+            if (copyChild.GetComponent<ReactiveTarget>().isFollow == true)
+            {
+                ChangeCondition(1);
+            }
+            else if (isPreviousStagesDone())
+            {
+                ChangeCondition(0);
+            }
+            else
+            {
+                ChangeCondition(3);
+            }
+            
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+
+        Debug.Log($"Coll {gameObject.name}\n{collision.gameObject.name}");
+        if (collision.transform == copyChild)
+        {
+            Destroy(copyChild.gameObject);
+            ChangeCondition(2);
+        }
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+
+        Debug.Log($"Coll {gameObject.name}\n{collision.gameObject.name}");            
+        if (collision.transform == copyChild)
+        {
+            Destroy(copyChild.gameObject);
+            ChangeCondition(2);
+        }
+    }
+
+    private bool amICopy()
+    {
+        if (originalParent == null)
+            return false;
+        else
+            return true;
+    }
+
+    private bool isPreviousStagesDone()
+    {
+        bool isDone = true;
+        //if(previousStages.Count == 0)
+        foreach(Transform prev in previousStages)
+        {
+            if(prev.GetComponent<Detail_BlueprintLogic>().condition != 2)
+                isDone = false;
+        }
+        return isDone;
+    }
+
+    private Vector3 randomPosAround(Vector3 centerPos)
+    {
+        if(Random.Range(0, 100) < 50)
+        return new Vector3(
+            centerPos.x + Random.Range(minSpawnRadius * 10, maxSpawnRadius * 10)/10f,
+            0.5f,
+            centerPos.z + Random.Range(minSpawnRadius * 10, maxSpawnRadius * 10)/10f
+            );
+        else
+            return new Vector3(
+            centerPos.x - Random.Range(minSpawnRadius * 10, maxSpawnRadius * 10) / 10f,
+            0.5f,
+            centerPos.z - Random.Range(minSpawnRadius * 10, maxSpawnRadius * 10)/10f
+            );
     }
 
     public void CreateDetail(Vector3 position)
     {
+        position = randomPosAround(position);
         GameObject newCopy = Instantiate(gameObject, position ,this.transform.rotation);
+        newCopy.GetComponent<Detail_BlueprintLogic>().ChangeCondition(2);
         newCopy.GetComponent<Detail_BlueprintLogic>().SetParent(transform);
         copyChild = newCopy.GetComponent<Transform>();
+        
+        newCopy.GetComponent<ReactiveTarget>().isReactive = true;
+        //newCopy.GetComponent<BoxCollider>().isTrigger = false;
+
+        newCopy.GetComponent<ReactiveTarget>().link1 = gameObject.GetComponent<BoxCollider>();
+        newCopy.GetComponent<ReactiveTarget>().link2 = newCopy.GetComponent<BoxCollider>();
+
+        gameObject.GetComponent<ReactiveTarget>().link1 = gameObject.GetComponent<BoxCollider>();
+        gameObject.GetComponent<ReactiveTarget>().link2 = newCopy.GetComponent<BoxCollider>();
+
     }
 
     public void SetParent(Transform parent)

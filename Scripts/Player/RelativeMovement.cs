@@ -6,14 +6,17 @@ public class RelativeMovement : MonoBehaviour
     public float rotSpeed = 15.0f;
     public float moveSpeed = 6.0f;
     private CharacterController _charController;
+    
 
     void Start()
     {
         _charController = GetComponent<CharacterController>();
+        _charController.detectCollisions = false;
  }
 
     void Update()
     {
+
         Vector3 movement = Vector3.zero;// ¬ Начинаем с вектора(0, 0, 0), непрерывно добавляя компоненты движения.
         float horInput = Input.GetAxis("Horizontal");
         float vertInput = Input.GetAxis("Vertical");
